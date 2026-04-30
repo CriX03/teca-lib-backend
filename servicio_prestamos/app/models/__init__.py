@@ -29,7 +29,9 @@ class Prestamo(db.Model):
             "libro_id": self.libro_id,
             "fecha_prestamo": self.fecha_prestamo.isoformat(),
             "fecha_devolucion": (
-                self.fecha_devolucion.isoformat() if self.fecha_devolucion is not None else None
+                self.fecha_devolucion.isoformat()
+                if self.fecha_devolucion is not None
+                else None
             ),
             "fecha_limite": self.fecha_limite.isoformat(),
             "estado": self.estado,

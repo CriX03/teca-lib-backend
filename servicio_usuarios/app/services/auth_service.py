@@ -102,7 +102,9 @@ def _clean_role_name(value: Any, allowed_roles: tuple[str, ...]) -> str:
     return role_name
 
 
-def register_user(payload: dict[str, Any], allowed_roles: tuple[str, ...]) -> dict[str, str | int]:
+def register_user(
+    payload: dict[str, Any], allowed_roles: tuple[str, ...]
+) -> dict[str, str | int]:
     nombre = _clean_nombre(payload.get("nombre"))
     email = _clean_email(payload.get("email"))
     password = _clean_password(payload.get("contrasena"))
@@ -110,7 +112,9 @@ def register_user(payload: dict[str, Any], allowed_roles: tuple[str, ...]) -> di
 
     existing_user = User.query.filter_by(email=email).first()
     if existing_user is not None:
-        raise ApiError("EMAIL_ALREADY_EXISTS", "Ya existe un usuario con este email.", 409)
+        raise ApiError(
+            "EMAIL_ALREADY_EXISTS", "Ya existe un usuario con este email.", 409
+        )
 
     role = Role.query.filter_by(nombre=role_name).first()
     if role is None:
@@ -199,3 +203,10 @@ def decode_access_token(
         raise ApiError("TOKEN_EXPIRED", "El token ha expirado.", 401) from error
     except jwt.InvalidTokenError as error:
         raise ApiError("INVALID_TOKEN", "El token no es valido.", 401) from error
+
+
+def get_user_by_id(user_id: int) -> dict[str, Any]:
+    user = User.query.filter_by(id=user_id).first()
+    if user is None:
+        raise ApiError("USER_NOT_FOUND", "Usuario no encontrado.", 404)
+    return user.to_dict()

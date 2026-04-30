@@ -7,7 +7,7 @@ from flask import Response, current_app, jsonify, request
 from app.errors import ApiError
 from app.middlewares.auth import auth_required
 from app.middlewares.roles import roles_required
-from app.services.auth_service import login_user, register_user
+from app.services.auth_service import get_user_by_id, login_user, register_user
 
 
 def _extract_json() -> dict[str, Any]:
@@ -63,7 +63,9 @@ def login() -> tuple[Response, int]:
 def me() -> tuple[Response, int]:
     current_user = getattr(request, "current_user", None)
     if current_user is None:
-        raise ApiError("AUTH_REQUIRED", "Debes autenticarte para acceder a este recurso.", 401)
+        raise ApiError(
+            "AUTH_REQUIRED", "Debes autenticarte para acceder a este recurso.", 401
+        )
 
     user_data = current_user.to_dict()
     return (
@@ -87,6 +89,20 @@ def admin_check() -> tuple[Response, int]:
                 "success": True,
                 "data": {"authorized": True},
                 "message": "Permiso de administrador valido.",
+            }
+        ),
+        200,
+    )
+
+
+def get_user_by_id_controller(user_id: int) -> tuple[Response, int]:
+    user_data = get_user_by_id(user_id)
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": user_data,
+                "message": "Usuario obtenido.",
             }
         ),
         200,
