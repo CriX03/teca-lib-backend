@@ -1,0 +1,174 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: teca_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: teca_user
+      POSTGRES_PASSWORD: teca_password
+      POSTGRES_DB: postgres
+      POSTGRES_MULTIPLE_DATABASES: usuarios_db,catalogo_db,prestamos_db,notificaciones_db,reportes_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teca_user -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - teca_net
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: teca_mailhog
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+    networks:
+      - teca_net
+
+  servicio_usuarios:
+    build:
+      context: ./servicio_usuarios
+    container_name: servicio_usuarios
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: servicio_usuarios
+      PORT: 5000
+      DATABASE_URL: postgresql+psycopg2://teca_user:teca_password@postgres:5432/usuarios_db
+      SECRET_KEY: teca-secret-key
+      JWT_SECRET_KEY: teca-jwt-secret
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRES_MINUTES: 60
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5001:5000"
+    networks:
+      - teca_net
+
+  servicio_catalogo:
+    build:
+      context: ./servicio_catalogo
+    container_name: servicio_catalogo
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: servicio_catalogo
+      PORT: 5000
+      DATABASE_URL: postgresql+psycopg2://teca_user:teca_password@postgres:5432/catalogo_db
+      USUARIOS_SERVICE_URL: http://servicio_usuarios:5000
+      USUARIOS_SERVICE_TIMEOUT_SECONDS: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+      servicio_usuarios:
+        condition: service_started
+    ports:
+      - "5002:5000"
+    networks:
+      - teca_net
+
+  servicio_prestamos:
+    build:
+      context: ./servicio_prestamos
+    container_name: servicio_prestamos
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: servicio_prestamos
+      PORT: 5000
+      DATABASE_URL: postgresql+psycopg2://teca_user:teca_password@postgres:5432/prestamos_db
+      USUARIOS_SERVICE_URL: http://servicio_usuarios:5000
+      USUARIOS_SERVICE_TIMEOUT_SECONDS: 5
+      CATALOGO_SERVICE_URL: http://servicio_catalogo:5000
+      EXTERNAL_SERVICES_TIMEOUT_SECONDS: 5
+      PRESTAMO_DIAS_POR_DEFECTO: 14
+    depends_on:
+      postgres:
+        condition: service_healthy
+      servicio_usuarios:
+        condition: service_started
+      servicio_catalogo:
+        condition: service_started
+    ports:
+      - "5003:5000"
+    networks:
+      - teca_net
+
+  servicio_notificaciones:
+    build:
+      context: ./servicio_notificaciones
+    container_name: servicio_notificaciones
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: servicio_notificaciones
+      PORT: 5000
+      DATABASE_URL: postgresql+psycopg2://teca_user:teca_password@postgres:5432/notificaciones_db
+      USUARIOS_SERVICE_URL: http://servicio_usuarios:5000
+      USUARIOS_SERVICE_TIMEOUT_SECONDS: 5
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_USERNAME: ${NOTIFICACIONES_SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${NOTIFICACIONES_SMTP_PASSWORD:-}
+      SMTP_USE_TLS: ${NOTIFICACIONES_SMTP_USE_TLS:-false}
+      SMTP_USE_SSL: ${NOTIFICACIONES_SMTP_USE_SSL:-false}
+      SMTP_TIMEOUT_SECONDS: ${NOTIFICACIONES_SMTP_TIMEOUT_SECONDS:-10}
+      SMTP_FROM_EMAIL: ${NOTIFICACIONES_SMTP_FROM_EMAIL:-no-reply@teca.local}
+      SMTP_FROM_NAME: ${NOTIFICACIONES_SMTP_FROM_NAME:-Teca Biblioteca}
+      MAX_REINTENTOS_ENVIO: ${NOTIFICACIONES_MAX_REINTENTOS_ENVIO:-3}
+      RETRY_BASE_DELAY_MINUTES: ${NOTIFICACIONES_RETRY_BASE_DELAY_MINUTES:-5}
+      NOTIFICATIONS_WORKER_ENABLED: ${NOTIFICACIONES_WORKER_ENABLED:-true}
+      NOTIFICATIONS_WORKER_INTERVAL_SECONDS: ${NOTIFICACIONES_WORKER_INTERVAL_SECONDS:-30}
+      NOTIFICATIONS_WORKER_BATCH_SIZE: ${NOTIFICACIONES_WORKER_BATCH_SIZE:-50}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+      servicio_usuarios:
+        condition: service_started
+    ports:
+      - "5004:5000"
+    networks:
+      - teca_net
+
+  servicio_reportes:
+    build:
+      context: ./servicio_reportes
+    container_name: servicio_reportes
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: servicio_reportes
+      PORT: 5000
+      DATABASE_URL: postgresql+psycopg2://teca_user:teca_password@postgres:5432/reportes_db
+      USUARIOS_SERVICE_URL: http://servicio_usuarios:5000
+      CATALOGO_SERVICE_URL: http://servicio_catalogo:5000
+      PRESTAMOS_SERVICE_URL: http://servicio_prestamos:5000
+      USUARIOS_SERVICE_TIMEOUT_SECONDS: 5
+      CATALOGO_SERVICE_TIMEOUT_SECONDS: 5
+      PRESTAMOS_SERVICE_TIMEOUT_SECONDS: 5
+      REPORTES_DEFAULT_LIMIT: ${REPORTES_DEFAULT_LIMIT:-10}
+      REPORTES_MAX_LIMIT: ${REPORTES_MAX_LIMIT:-100}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      servicio_usuarios:
+        condition: service_started
+      servicio_catalogo:
+        condition: service_started
+      servicio_prestamos:
+        condition: service_started
+    ports:
+      - "5005:5000"
+    networks:
+      - teca_net
+
+volumes:
+  postgres_data:
+
+networks:
+  teca_net:
+    driver: bridge
