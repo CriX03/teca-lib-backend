@@ -513,8 +513,6 @@ def list_all_prestamos(
 
         items.append(item)
 
-        items.append(item)
-
     return {
         "items": items,
         "pagination": {
