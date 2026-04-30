@@ -3,6 +3,8 @@ import time
 
 from flask import Flask
 from flask_cors import CORS
+from flask import request
+from flask import make_response
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import Config
@@ -47,7 +49,18 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app, origins=["http://localhost:5173", "http://localhost:5174"])
+    cors_origins = ["http://localhost:5173", "http://localhost:5174"]
+    CORS(app, resources={r"/*": {"origins": cors_origins}}, supports_credentials=True)
+
+    @app.before_request
+    def handle_preflight():
+        if request.method == "OPTIONS":
+            response = make_response()
+            response.headers.add("Access-Control-Allow-Origin", cors_origins[0])
+            response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            response.headers.add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,PATCH,OPTIONS")
+            response.headers.add("Access-Control-Allow-Credentials", "true")
+            return response
 
     db.init_app(app)
     migrate.init_app(app, db)
