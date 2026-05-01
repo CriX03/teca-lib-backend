@@ -117,7 +117,7 @@ def delete_categoria_endpoint(categoria_id: int):
 
 
 @catalog_bp.get("/libros")
-@internal_secret_required
+@auth_required
 def list_libros_endpoint():
     return list_libros_controller()
 

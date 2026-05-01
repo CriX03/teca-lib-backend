@@ -25,10 +25,25 @@ def client():
         yield test_client
 
 
+TEST_AUTH_HEADER = {"Authorization": "Bearer valid-token"}
+
+
 def _create_dependencies(client):
-    autor = client.post("/api/v1/catalogo/autores", json={"nombre": "Gabriel Garcia Marquez"})
-    editorial = client.post("/api/v1/catalogo/editoriales", json={"nombre": "Sudamericana"})
-    categoria = client.post("/api/v1/catalogo/categorias", json={"nombre": "Novela"})
+    autor = client.post(
+        "/api/v1/catalogo/autores",
+        json={"nombre": "Gabriel Garcia Marquez"},
+        headers=TEST_AUTH_HEADER,
+    )
+    editorial = client.post(
+        "/api/v1/catalogo/editoriales",
+        json={"nombre": "Sudamericana"},
+        headers=TEST_AUTH_HEADER,
+    )
+    categoria = client.post(
+        "/api/v1/catalogo/categorias",
+        json={"nombre": "Novela"},
+        headers=TEST_AUTH_HEADER,
+    )
 
     assert autor.status_code == 201
     assert editorial.status_code == 201
@@ -54,6 +69,7 @@ def test_crud_libro_and_disponibilidad(client):
             "categoria_id": categoria_id,
             "disponibilidad": True,
         },
+        headers=TEST_AUTH_HEADER,
     )
     assert create_response.status_code == 201
     libro_id = create_response.get_json()["data"]["id"]
@@ -79,11 +95,15 @@ def test_crud_libro_and_disponibilidad(client):
             "categoria_id": categoria_id,
             "disponibilidad": True,
         },
+        headers=TEST_AUTH_HEADER,
     )
     assert update_response.status_code == 200
     assert update_response.get_json()["data"]["disponibilidad"] is True
 
-    delete_response = client.delete(f"/api/v1/catalogo/libros/{libro_id}")
+    delete_response = client.delete(
+        f"/api/v1/catalogo/libros/{libro_id}",
+        headers=TEST_AUTH_HEADER,
+    )
     assert delete_response.status_code == 200
 
     missing_response = client.get(f"/api/v1/catalogo/libros/{libro_id}")
@@ -100,10 +120,14 @@ def test_isbn_unique_validation(client):
         "editorial_id": editorial_id,
         "categoria_id": categoria_id,
     }
-    first = client.post("/api/v1/catalogo/libros", json=payload)
+    first = client.post("/api/v1/catalogo/libros", json=payload, headers=TEST_AUTH_HEADER)
     assert first.status_code == 201
 
-    second = client.post("/api/v1/catalogo/libros", json={**payload, "titulo": "Libro Dos"})
+    second = client.post(
+        "/api/v1/catalogo/libros",
+        json={**payload, "titulo": "Libro Dos"},
+        headers=TEST_AUTH_HEADER,
+    )
     assert second.status_code == 409
     assert second.get_json()["error"]["code"] == "ISBN_ALREADY_EXISTS"
 
@@ -121,6 +145,7 @@ def test_libros_filters(client):
             "categoria_id": categoria_id,
             "disponibilidad": True,
         },
+        headers=TEST_AUTH_HEADER,
     )
     client.post(
         "/api/v1/catalogo/libros",
@@ -132,9 +157,13 @@ def test_libros_filters(client):
             "categoria_id": categoria_id,
             "disponibilidad": False,
         },
+        headers=TEST_AUTH_HEADER,
     )
 
-    available_response = client.get("/api/v1/catalogo/libros?disponible=true")
+    available_response = client.get(
+        "/api/v1/catalogo/libros?disponible=true",
+        headers=TEST_AUTH_HEADER,
+    )
     assert available_response.status_code == 200
     items = available_response.get_json()["data"]["items"]
     assert len(items) == 1
@@ -152,9 +181,13 @@ def test_cannot_delete_autor_with_books(client):
             "editorial_id": editorial_id,
             "categoria_id": categoria_id,
         },
+        headers=TEST_AUTH_HEADER,
     )
 
-    response = client.delete(f"/api/v1/catalogo/autores/{autor_id}")
+    response = client.delete(
+        f"/api/v1/catalogo/autores/{autor_id}",
+        headers=TEST_AUTH_HEADER,
+    )
     assert response.status_code == 409
     assert response.get_json()["error"]["code"] == "AUTOR_IN_USE"
 
@@ -170,13 +203,20 @@ def test_cannot_delete_editorial_or_categoria_with_books(client):
             "editorial_id": editorial_id,
             "categoria_id": categoria_id,
         },
+        headers=TEST_AUTH_HEADER,
     )
     assert create_book.status_code == 201
 
-    editorial_response = client.delete(f"/api/v1/catalogo/editoriales/{editorial_id}")
+    editorial_response = client.delete(
+        f"/api/v1/catalogo/editoriales/{editorial_id}",
+        headers=TEST_AUTH_HEADER,
+    )
     assert editorial_response.status_code == 409
     assert editorial_response.get_json()["error"]["code"] == "EDITORIAL_IN_USE"
 
-    categoria_response = client.delete(f"/api/v1/catalogo/categorias/{categoria_id}")
+    categoria_response = client.delete(
+        f"/api/v1/catalogo/categorias/{categoria_id}",
+        headers=TEST_AUTH_HEADER,
+    )
     assert categoria_response.status_code == 409
     assert categoria_response.get_json()["error"]["code"] == "CATEGORIA_IN_USE"
