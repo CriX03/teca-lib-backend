@@ -37,25 +37,21 @@ def retrasos_endpoint():
 
 
 @reportes_bp.post("/sync/usuarios")
-@auth_required
 def sync_usuarios_endpoint():
     return sync_usuarios_controller()
 
 
 @reportes_bp.post("/sync/libros")
-@auth_required
 def sync_libros_endpoint():
     return sync_libros_controller()
 
 
 @reportes_bp.post("/sync/prestamos")
-@auth_required
 def sync_prestamos_endpoint():
     return sync_prestamos_controller()
 
 
 @reportes_bp.post("/sync/lote")
-@auth_required
 def sync_lote_endpoint():
     return sync_lote_controller()
 

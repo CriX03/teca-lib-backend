@@ -19,3 +19,4 @@ class Config:
         os.getenv("EXTERNAL_SERVICES_TIMEOUT_SECONDS", "5")
     )
     PRESTAMO_DIAS_POR_DEFECTO = int(os.getenv("PRESTAMO_DIAS_POR_DEFECTO", "14"))
+    INTERNAL_SERVICE_SECRET = os.getenv("INTERNAL_SERVICE_SECRET", "")

@@ -386,25 +386,27 @@ def list_all_prestamos(
     fecha_limite_hasta: str | None = None,
     libro_id: int | None = None,
     libro_titulo: str | None = None,
+    skip_auth: bool = False,
 ) -> dict[str, Any]:
-    token = _extract_token_from_header(authorization_header)
-    user_data = _request_json(
-        "GET",
-        f"{usuarios_service_url}/api/v1/auth/me",
-        timeout_seconds=timeout_seconds,
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    payload = user_data.get("data")
-    if not isinstance(payload, dict):
-        raise ApiError(
-            "DEPENDENCY_INVALID_RESPONSE",
-            "La respuesta de usuarios no incluye data valida.",
-            503,
+    if not skip_auth:
+        token = _extract_token_from_header(authorization_header)
+        user_data = _request_json(
+            "GET",
+            f"{usuarios_service_url}/api/v1/auth/me",
+            timeout_seconds=timeout_seconds,
+            headers={"Authorization": f"Bearer {token}"},
         )
+        payload = user_data.get("data")
+        if not isinstance(payload, dict):
+            raise ApiError(
+                "DEPENDENCY_INVALID_RESPONSE",
+                "La respuesta de usuarios no incluye data valida.",
+                503,
+            )
 
-    user_role = payload.get("rol", "").lower()
-    if user_role != "admin":
-        raise ApiError("FORBIDDEN", "No tienes permisos de administrador.", 403)
+        user_role = payload.get("rol", "").lower()
+        if user_role != "admin":
+            raise ApiError("FORBIDDEN", "No tienes permisos de administrador.", 403)
 
     query = Prestamo.query
 

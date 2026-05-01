@@ -76,6 +76,7 @@ def devolver_prestamo_controller(prestamo_id: int) -> tuple[Response, int]:
 
 def list_all_prestamos_controller() -> tuple[Response, int]:
     args = request.args
+    skip_auth = request.headers.get("X-Internal-Secret", "") == current_app.config.get("INTERNAL_SERVICE_SECRET", "")
     data = list_all_prestamos(
         authorization_header=request.headers.get("Authorization"),
         usuarios_service_url=current_app.config["USUARIOS_SERVICE_URL"],
@@ -90,6 +91,7 @@ def list_all_prestamos_controller() -> tuple[Response, int]:
         fecha_limite_hasta=args.get("fecha_limite_hasta", None),
         libro_id=args.get("libro_id", None, type=int) if args.get("libro_id") else None,
         libro_titulo=args.get("libro_titulo", None),
+        skip_auth=skip_auth,
     )
     return _success_response(data, "Prestamos obtenidos correctamente.")
 

@@ -356,18 +356,20 @@ def sync_prestamos(items: list[dict[str, Any]]) -> dict[str, int]:
         usuario_id = _clean_positive_int(item.get("usuario_id"), "usuario_id")
         libro_id = _clean_positive_int(item.get("libro_id"), "libro_id")
 
-        if UsuarioAnalitico.query.filter_by(id=usuario_id).first() is None:
-            raise ApiError(
-                "FK_NOT_FOUND",
-                f"No existe usuario_analitico con id={usuario_id}.",
-                409,
-            )
-        if LibroAnalitico.query.filter_by(id=libro_id).first() is None:
-            raise ApiError(
-                "FK_NOT_FOUND",
-                f"No existe libro_analitico con id={libro_id}.",
-                409,
-            )
+        usuario = UsuarioAnalitico.query.filter_by(id=usuario_id).first()
+        if usuario is None:
+            usuario = UsuarioAnalitico(id=usuario_id)
+            usuario.nombre = f"Usuario {usuario_id}"
+            usuario.email = f"usuario{usuario_id}@temp.teca"
+            db.session.add(usuario)
+            db.session.flush()
+
+        libro = LibroAnalitico.query.filter_by(id=libro_id).first()
+        if libro is None:
+            libro = LibroAnalitico(id=libro_id)
+            libro.titulo = f"Libro {libro_id}"
+            db.session.add(libro)
+            db.session.flush()
 
         fecha_prestamo = _clean_iso_datetime(item.get("fecha_prestamo"), "fecha_prestamo")
         fecha_limite = _clean_iso_datetime(item.get("fecha_limite"), "fecha_limite")
@@ -409,15 +411,20 @@ def sync_lote(payload: dict[str, Any]) -> dict[str, dict[str, int]]:
     libros_items = _extract_items(payload, "libros")
     prestamos_items = _extract_items(payload, "prestamos")
 
-    if usuarios_items or libros_items or prestamos_items:
-        PrestamoAnalitico.query.delete()
-        UsuarioAnalitico.query.delete()
-        LibroAnalitico.query.delete()
-        db.session.commit()
+    # First sync usuarios and libros (required for FK constraints)
+    result_usuarios = {"created": 0, "updated": 0}
+    result_libros = {"created": 0, "updated": 0}
 
-    result_usuarios = sync_usuarios(usuarios_items) if usuarios_items else {"created": 0, "updated": 0}
-    result_libros = sync_libros(libros_items) if libros_items else {"created": 0, "updated": 0}
-    result_prestamos = sync_prestamos(prestamos_items) if prestamos_items else {"created": 0, "updated": 0}
+    if usuarios_items:
+        result_usuarios = sync_usuarios(usuarios_items)
+
+    if libros_items:
+        result_libros = sync_libros(libros_items)
+
+    # Then sync prestamos (depends on usuarios and libros)
+    result_prestamos = {"created": 0, "updated": 0}
+    if prestamos_items:
+        result_prestamos = sync_prestamos(prestamos_items)
 
     return {
         "usuarios": result_usuarios,

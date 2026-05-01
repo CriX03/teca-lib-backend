@@ -25,6 +25,7 @@ from app.controllers import (
     update_libro_controller,
 )
 from app.middlewares.auth import auth_required
+from app.middlewares.internal_auth import internal_secret_required
 from app.routes.health_routes import health_bp
 
 
@@ -116,6 +117,7 @@ def delete_categoria_endpoint(categoria_id: int):
 
 
 @catalog_bp.get("/libros")
+@internal_secret_required
 def list_libros_endpoint():
     return list_libros_controller()
 

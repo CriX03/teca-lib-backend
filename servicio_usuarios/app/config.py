@@ -20,3 +20,4 @@ class Config:
         os.getenv("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", "60")
     )
     DEFAULT_ROLES = ("admin", "estudiante", "docente")
+    INTERNAL_SERVICE_SECRET = os.getenv("INTERNAL_SERVICE_SECRET", "")

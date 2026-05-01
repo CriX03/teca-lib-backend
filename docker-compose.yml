@@ -43,6 +43,7 @@ services:
       JWT_SECRET_KEY: teca-jwt-secret
       JWT_ALGORITHM: HS256
       JWT_ACCESS_TOKEN_EXPIRES_MINUTES: 60
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-94e5617aa3e6fc7134087d8122433bffe3ad9fbaa4074abb5348141f3ff0bb79}
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,6 +63,7 @@ services:
       DATABASE_URL: postgresql+psycopg2://teca_user:teca_password@postgres:5432/catalogo_db
       USUARIOS_SERVICE_URL: http://servicio_usuarios:5000
       USUARIOS_SERVICE_TIMEOUT_SECONDS: 5
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-94e5617aa3e6fc7134087d8122433bffe3ad9fbaa4074abb5348141f3ff0bb79}
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,6 +88,7 @@ services:
       CATALOGO_SERVICE_URL: http://servicio_catalogo:5000
       EXTERNAL_SERVICES_TIMEOUT_SECONDS: 5
       PRESTAMO_DIAS_POR_DEFECTO: 14
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-94e5617aa3e6fc7134087d8122433bffe3ad9fbaa4074abb5348141f3ff0bb79}
     depends_on:
       postgres:
         condition: service_healthy
@@ -109,6 +112,7 @@ services:
       DATABASE_URL: postgresql+psycopg2://teca_user:teca_password@postgres:5432/notificaciones_db
       USUARIOS_SERVICE_URL: http://servicio_usuarios:5000
       USUARIOS_SERVICE_TIMEOUT_SECONDS: 5
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-94e5617aa3e6fc7134087d8122433bffe3ad9fbaa4074abb5348141f3ff0bb79}
       SMTP_HOST: mailhog
       SMTP_PORT: 1025
       SMTP_USERNAME: ${NOTIFICACIONES_SMTP_USERNAME:-}
@@ -152,6 +156,10 @@ services:
       PRESTAMOS_SERVICE_TIMEOUT_SECONDS: 5
       REPORTES_DEFAULT_LIMIT: ${REPORTES_DEFAULT_LIMIT:-10}
       REPORTES_MAX_LIMIT: ${REPORTES_MAX_LIMIT:-100}
+      REPORTES_WORKER_ENABLED: ${REPORTES_WORKER_ENABLED:-true}
+      REPORTES_SYNC_INTERVAL_SECONDS: ${REPORTES_SYNC_INTERVAL_SECONDS:-300}
+      REPORTES_SYNC_TIMEOUT_SECONDS: ${REPORTES_SYNC_TIMEOUT_SECONDS:-10}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-94e5617aa3e6fc7134087d8122433bffe3ad9fbaa4074abb5348141f3ff0bb79}
     depends_on:
       postgres:
         condition: service_healthy

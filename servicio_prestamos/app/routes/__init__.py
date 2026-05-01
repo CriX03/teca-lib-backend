@@ -8,6 +8,7 @@ from app.controllers import (
     list_all_prestamos_controller,
     list_mis_prestamos_controller,
 )
+from app.middlewares.internal_auth import internal_secret_required
 from app.routes.health_routes import health_bp
 
 prestamos_bp = Blueprint("prestamos", __name__, url_prefix="/api/v1/prestamos")
@@ -34,6 +35,7 @@ def devolver_prestamo_endpoint(prestamo_id: int):
 
 
 @prestamos_bp.route("/admin/todos", methods=["GET"])
+@internal_secret_required
 def list_all_prestamos_endpoint():
     return list_all_prestamos_controller()
 

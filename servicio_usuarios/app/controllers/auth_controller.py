@@ -107,3 +107,24 @@ def get_user_by_id_controller(user_id: int) -> tuple[Response, int]:
         ),
         200,
     )
+
+
+def list_users_controller() -> tuple[Response, int]:
+    from flask import request
+
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 100, type=int), 1000)
+
+    from app.services import list_all_users
+
+    data = list_all_users(page=page, limit=per_page)
+    return (
+        jsonify(
+            {
+                "success": True,
+                "data": data,
+                "message": "Usuarios obtenidos.",
+            }
+        ),
+        200,
+    )

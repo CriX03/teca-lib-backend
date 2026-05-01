@@ -10,6 +10,7 @@ from app.errors.handlers import register_error_handlers
 from app.extensions import db, migrate
 from app.models import BootstrapRecord
 from app.routes import register_routes
+from app.services.sync_worker import start_sync_worker
 
 
 def _initialize_database(app: Flask) -> None:
@@ -26,7 +27,9 @@ def _initialize_database(app: Flask) -> None:
                     service_name=service_name
                 ).first()
                 if record is None:
-                    db.session.add(BootstrapRecord(service_name=service_name))
+                    record = BootstrapRecord()
+                    record.service_name = service_name
+                    db.session.add(record)
                     db.session.commit()
 
                 return
@@ -55,5 +58,6 @@ def create_app() -> Flask:
     register_error_handlers(app)
     register_routes(app)
     _initialize_database(app)
+    start_sync_worker(app)
 
     return app
