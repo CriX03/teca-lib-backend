@@ -57,8 +57,6 @@ def _validate_token_with_usuarios_service(
         )
 
 
-import sys
-
 def auth_required(func: RouteHandler) -> RouteHandler:
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
