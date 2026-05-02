@@ -1,3 +1,21 @@
+"""
+Middleware de autenticacion para el servicio de catalogo.
+
+Este modulo proporciona el decorador 'auth_required' que valida tokens JWT
+llamando al servicio de usuarios externo. A diferencia del servicio de usuarios,
+el catalogo delega la validacion para mantener desacoplamiento.
+
+Flujo de autenticacion:
+    1. Extrae el token del header Authorization (formato: Bearer <token>).
+    2. Llama al endpoint /api/v1/auth/me del servicio de usuarios.
+    3. Recupera los datos del usuario y los adjunta a la peticion.
+    4. Maneja errores de conexion o token invalido.
+
+Configuracion:
+    - USUARIOS_SERVICE_URL: URL del servicio de usuarios.
+    - USUARIOS_SERVICE_TIMEOUT_SECONDS: Timeout para la validacion.
+"""
+
 from __future__ import annotations
 
 from functools import wraps
@@ -12,6 +30,7 @@ RouteHandler = Callable[..., Any]
 
 
 def _extract_bearer_token() -> str:
+    """Extrae el token JWT del header Authorization."""
     authorization = request.headers.get("Authorization", "").strip()
     if not authorization:
         raise ApiError("MISSING_AUTH_HEADER", "Falta el header Authorization.", 401)
@@ -32,6 +51,20 @@ def _validate_token_with_usuarios_service(
     usuarios_service_url: str,
     timeout_seconds: int,
 ) -> dict[str, Any]:
+    """
+    Valida el token con el servicio de usuarios externo.
+
+    Args:
+        token: Token JWT a validar.
+        usuarios_service_url: URL base del servicio de usuarios.
+        timeout_seconds: Timeout para la peticion HTTP.
+
+    Returns:
+        Datos del usuario contenidos en la respuesta.
+
+    Raises:
+        ApiError: Si la validacion falla.
+    """
     try:
         response = requests.get(
             f"{usuarios_service_url}/api/v1/auth/me",
@@ -58,6 +91,8 @@ def _validate_token_with_usuarios_service(
 
 
 def auth_required(func: RouteHandler) -> RouteHandler:
+    """Decorador que exige autenticacion para acceder al endpoint."""
+
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         token = _extract_bearer_token()

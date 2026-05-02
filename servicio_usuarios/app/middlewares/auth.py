@@ -1,3 +1,17 @@
+"""
+Middleware de autenticacion JWT para el servicio de usuarios.
+
+Este modulo proporciona el decorador 'auth_required' que verifica la presencia y validez
+de un token JWT en el header Authorization de las peticiones. Protege endpoints
+que requieren autenticacion de usuario.
+
+Flujo de autenticacion:
+    1. Extrae el token del header Authorization (formato: Bearer <token>).
+    2. Decodifica y valida el token usando la configuracion JWT.
+    3. Recupera el usuario asociado del token.
+    4. Adjunta el usuario al objeto request para uso en endpoints.
+"""
+
 from __future__ import annotations
 
 from functools import wraps
@@ -13,6 +27,7 @@ RouteHandler = Callable[..., Any]
 
 
 def _extract_bearer_token() -> str:
+    """Extrae el token JWT del header Authorization."""
     authorization = request.headers.get("Authorization", "").strip()
     if not authorization:
         raise ApiError("MISSING_AUTH_HEADER", "Falta el header Authorization.", 401)
@@ -29,6 +44,8 @@ def _extract_bearer_token() -> str:
 
 
 def auth_required(func: RouteHandler) -> RouteHandler:
+    """Decorador que exige autenticacion JWT para acceder al endpoint."""
+
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         token = _extract_bearer_token()

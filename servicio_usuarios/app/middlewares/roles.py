@@ -1,3 +1,18 @@
+"""
+Middleware de control de acceso por roles.
+
+Este modulo proporciona el decorador 'roles_required' que complementa la autenticacion JWT
+verificando que el usuario autenticado posea el rol necesario para acceder al recurso.
+Implementa el control de acceso basado en roles (RBAC).
+
+Roles disponibles:
+    - admin: Acceso total al sistema.
+    - estudiante: Acceso basico a prestamos.
+    - docente: Acceso a materiales academicos.
+
+Nota: Este decorador debe aplicarse DESPUES del decorador @auth_required.
+"""
+
 from __future__ import annotations
 
 from functools import wraps
@@ -11,6 +26,8 @@ RouteHandler = Callable[..., Any]
 
 
 def roles_required(*allowed_roles: str) -> Callable[[RouteHandler], RouteHandler]:
+    """Decorador que verifica el rol del usuario autenticado."""
+
     normalized_roles = {role.strip().lower() for role in allowed_roles}
 
     def decorator(func: RouteHandler) -> RouteHandler:

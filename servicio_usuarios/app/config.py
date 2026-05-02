@@ -1,7 +1,27 @@
+"""
+Configuracion centralizada del servicio de usuarios.
+
+Este modulo define las variables de configuracion necesarias para el funcionamiento
+del servicio de autenticacion y gestion de usuarios. Los valores se cargan desde
+variables de entorno con valores por defecto seguros para desarrollo.
+
+Variables de entorno:
+    SERVICE_NAME: Nombre identificador del servicio (default: servicio_usuarios).
+    PORT: Puerto donde escuchara la aplicacion (default: 5000).
+    SECRET_KEY: Clave secreta para sesiones Flask.
+    DATABASE_URL: URL de conexion a PostgreSQL.
+    JWT_SECRET_KEY: Clave secreta para firmar tokens JWT.
+    JWT_ALGORITHM: Algoritmo de firma JWT (default: HS256).
+    JWT_ACCESS_TOKEN_EXPIRES_MINUTES: Tiempo de validez del token en minutos (default: 60).
+    INTERNAL_SERVICE_SECRET: Clave para comunicacion interna entre servicios.
+"""
+
 import os
 
 
 class Config:
+    """Clase de configuracion que carga variables de entorno."""
+
     SERVICE_NAME = os.getenv("SERVICE_NAME", "servicio_usuarios")
     PORT = int(os.getenv("PORT", "5000"))
     SECRET_KEY = os.getenv("SECRET_KEY", "teca-dev-secret")

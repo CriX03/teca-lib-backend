@@ -1,7 +1,26 @@
+"""
+Configuracion centralizada del servicio de prestamos.
+
+Este modulo define las variables de configuracion necesarias para el funcionamiento
+del servicio de prestamos de libros. Los valores se cargan desde variables de entorno.
+
+Variables de entorno:
+    SERVICE_NAME: Nombre identificador del servicio (default: servicio_prestamos).
+    PORT: Puerto donde escuchara la aplicacion (default: 5000).
+    DATABASE_URL: URL de conexion a PostgreSQL.
+    USUARIOS_SERVICE_URL: URL del servicio de usuarios.
+    CATALOGO_SERVICE_URL: URL del servicio de catalogo.
+    EXTERNAL_SERVICES_TIMEOUT_SECONDS: Timeout para llamadas externas.
+    PRESTAMO_DIAS_POR_DEFECTO: Dias de duracion de un prestamo (default: 14).
+    INTERNAL_SERVICE_SECRET: Clave para comunicacion interna.
+"""
+
 import os
 
 
 class Config:
+    """Clase de configuracion que carga variables de entorno."""
+
     SERVICE_NAME = os.getenv("SERVICE_NAME", "servicio_prestamos")
     PORT = int(os.getenv("PORT", "5000"))
     SQLALCHEMY_DATABASE_URI = os.getenv(

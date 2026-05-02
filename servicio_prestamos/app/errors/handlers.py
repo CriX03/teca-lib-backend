@@ -1,3 +1,10 @@
+"""
+Manejadores de errores personalizados del servicio.
+
+Este modulo registra los manejadores de errores de la aplicacion Flask,
+convirtiendo excepciones en respuestas JSON estandarizadas.
+"""
+
 from flask import Flask, Response, jsonify
 from werkzeug.exceptions import HTTPException
 
@@ -5,6 +12,8 @@ from app.errors import ApiError
 
 
 def register_error_handlers(app: Flask) -> None:
+    """Registra los manejadores de errores en la aplicacion Flask."""
+
     @app.errorhandler(ApiError)
     def handle_api_error(error: ApiError) -> tuple[Response, int]:
         return (

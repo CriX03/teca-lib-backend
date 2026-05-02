@@ -1,7 +1,25 @@
+"""
+Configuracion centralizada del servicio de notificaciones.
+
+Este modulo define las variables de configuracion necesarias para el funcionamiento
+del servicio de notificaciones por email.
+
+Variables de entorno:
+    SERVICE_NAME: Nombre del servicio.
+    DATABASE_URL: URL de conexion a PostgreSQL.
+    USUARIOS_SERVICE_URL: URL del servicio de usuarios.
+    SMTP_HOST, SMTP_PORT: Servidor de email.
+    SMTP_* : Configuracion de autenticacion SMTP.
+    MAX_REINTENTOS_ENVIO: Reintentos para mensajes fallidos.
+    NOTIFICATIONS_WORKER_*: Configuracion del proceso en segundo plano.
+"""
+
 import os
 
 
 class Config:
+    """Clase de configuracion que carga variables de entorno."""
+
     SERVICE_NAME = os.getenv("SERVICE_NAME", "servicio_notificaciones")
     PORT = int(os.getenv("PORT", "5000"))
     SQLALCHEMY_DATABASE_URI = os.getenv(

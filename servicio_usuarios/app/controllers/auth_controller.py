@@ -1,3 +1,23 @@
+"""
+Controlador de autenticacion y gestion de usuarios.
+
+Este modulo mapea las peticiones HTTP a llamadas de los servicios de negocio.
+Valida el formato de las peticiones, extrae los datos y форматatea las respuestas
+en el esquema JSON estandarizado del proyecto.
+
+Endpoints disponibles:
+    - POST /api/v1/auth/registro: Registrar nuevo usuario.
+    - POST /api/v1/auth/login: Autenticar usuario.
+    - GET /api/v1/auth/me: Obtener usuario actual (requiere auth).
+    - GET /api/v1/auth/admin/check: Verificar rol admin (requiere auth y admin).
+    - GET /api/v1/auth/usuarios: Listar usuarios (requiere internal secret).
+    - GET /api/v1/auth/usuarios/<id>: Obtener usuario por ID.
+
+Respuestas:
+    - Exito: {"success": true, "data": ..., "message": "..."}
+    - Error: {"success": false, "error": {"code": ..., "message": ...}}
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -11,6 +31,7 @@ from app.services.auth_service import get_user_by_id, login_user, register_user
 
 
 def _extract_json() -> dict[str, Any]:
+    """Extrae y valida el cuerpo JSON de la peticion."""
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         raise ApiError(
@@ -22,6 +43,17 @@ def _extract_json() -> dict[str, Any]:
 
 
 def register() -> tuple[Response, int]:
+    """
+    Controlador para el registro de nuevos usuarios.
+
+    Proceso:
+        1. Extrae el JSON de la peticion.
+        2. Llama al servicio de registro.
+        3. Retorna respuesta exitosa con codigo 201.
+
+    Returns:
+        Tupla con respuesta JSON y codigo de estado HTTP.
+    """
     payload = _extract_json()
     user_data = register_user(payload, current_app.config["DEFAULT_ROLES"])
 
@@ -38,6 +70,17 @@ def register() -> tuple[Response, int]:
 
 
 def login() -> tuple[Response, int]:
+    """
+    Controlador para el inicio de sesion de usuarios.
+
+    Proceso:
+        1. Extrae el JSON de la peticion.
+        2. Valida credenciales y genera token JWT.
+        3. Retorna token y datos del usuario.
+
+    Returns:
+        Tupla con respuesta JSON y codigo de estado HTTP.
+    """
     payload = _extract_json()
     token_data = login_user(
         payload,
@@ -61,6 +104,14 @@ def login() -> tuple[Response, int]:
 
 @auth_required
 def me() -> tuple[Response, int]:
+    """
+    Controlador para obtener el usuario autenticado actual.
+
+    Requiere: Token JWT valido en el header Authorization.
+
+    Returns:
+        Tupla con datos del usuario actual y codigo 200.
+    """
     current_user = getattr(request, "current_user", None)
     if current_user is None:
         raise ApiError(
@@ -83,6 +134,14 @@ def me() -> tuple[Response, int]:
 @auth_required
 @roles_required("admin")
 def admin_check() -> tuple[Response, int]:
+    """
+    Controlador para verificar permisos de administrador.
+
+    Requiere: Token JWT y rol de administrador.
+
+    Returns:
+        Respuesta exitosa confirmando acceso de admin.
+    """
     return (
         jsonify(
             {
@@ -96,13 +155,22 @@ def admin_check() -> tuple[Response, int]:
 
 
 def get_user_by_id_controller(user_id: int) -> tuple[Response, int]:
+    """
+    Controlador para obtener un usuario por su ID.
+
+    Args:
+        user_id: Identificador del usuario a buscar.
+
+    Returns:
+        Tupla con datos del usuario encontrado.
+    """
     user_data = get_user_by_id(user_id)
     return (
         jsonify(
             {
                 "success": True,
                 "data": user_data,
-                "message": "Usuario obtenido.",
+                "message": "Usuario obtenuido.",
             }
         ),
         200,
@@ -110,6 +178,16 @@ def get_user_by_id_controller(user_id: int) -> tuple[Response, int]:
 
 
 def list_users_controller() -> tuple[Response, int]:
+    """
+    Controlador para listar usuarios con paginacion.
+
+    Query params:
+        - page: Numero de pagina (default: 1).
+        - per_page: Elementos por pagina (default: 100, max: 1000).
+
+    Returns:
+        Tupla con lista de usuarios y metadatos de paginacion.
+    """
     from flask import request
 
     page = request.args.get("page", 1, type=int)

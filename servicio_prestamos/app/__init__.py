@@ -1,10 +1,22 @@
+"""
+Punto de creacion de la aplicacion Flask para el servicio de prestamos.
+
+Este modulo es el entry point principal de la aplicacion. Proporciona la funcion 'create_app()'
+que inicializa y configura todos los componentes necesarios:
+    - Instancia Flask y su configuracion.
+    - Extensiones (SQLAlchemy, CORS, Migrate).
+    - Manejadores de errores personalizados.
+    - Rutas de la API.
+    - Inicializacion de la base de datos con reintentos automaticos.
+"""
+
 import os
 import time
 
 from flask import Flask
-from flask_cors import CORS
-from flask import request
 from flask import make_response
+from flask import request
+from flask_cors import CORS
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import Config
@@ -15,6 +27,17 @@ from app.routes import register_routes
 
 
 def _initialize_database(app: Flask) -> None:
+    """
+    Inicializa la base de datos con reintentos automaticos.
+
+    Proceso:
+        1. Intenta crear todas las tablas.
+        2. Crea el registro de bootstrap del servicio.
+        3. Reintenta en caso de error de conexion (hasta DB_INIT_MAX_ATTEMPTS).
+
+    Args:
+        app: Instancia de la aplicacion Flask.
+    """
     max_attempts = int(os.getenv("DB_INIT_MAX_ATTEMPTS", "30"))
     delay_seconds = float(os.getenv("DB_INIT_DELAY_SECONDS", "2"))
 
@@ -46,6 +69,21 @@ def _initialize_database(app: Flask) -> None:
 
 
 def create_app() -> Flask:
+    """
+    Crea y configura la aplicacion Flask del servicio.
+
+    Pasos de inicializacion:
+        1. Crear instancia Flask con la configuracion.
+        2. Habilitar CORS para origenes de desarrollo.
+        3. Configurar manejo de peticiones OPTIONS para preflight.
+        4. Inicializar SQLAlchemy y Migrate.
+        5. Registrar manejadores de errores.
+        6. Registrar todas las rutas.
+        7. Inicializar base de datos.
+
+    Returns:
+        Instancia configurada de la aplicacion Flask.
+    """
     app = Flask(__name__)
     app.config.from_object(Config)
 
@@ -54,6 +92,7 @@ def create_app() -> Flask:
 
     @app.before_request
     def handle_preflight():
+        """Maneja peticiones OPTIONS para CORS preflight."""
         if request.method == "OPTIONS":
             response = make_response()
             response.headers.add("Access-Control-Allow-Origin", cors_origins[0])
