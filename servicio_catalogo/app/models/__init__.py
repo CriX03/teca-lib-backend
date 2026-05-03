@@ -140,6 +140,7 @@ class Libro(db.Model):
         index=True,
     )
     disponibilidad = db.Column(db.Boolean, nullable=False, default=True, index=True)
+    descripcion = db.Column(db.Text, nullable=True)
     fecha_creacion = db.Column(
         db.DateTime(timezone=True),
         nullable=False,
@@ -160,6 +161,7 @@ class Libro(db.Model):
             "editorial_id": self.editorial_id,
             "categoria_id": self.categoria_id,
             "disponibilidad": self.disponibilidad,
+            "descripcion": self.descripcion,
             "fecha_creacion": self.fecha_creacion.isoformat(),
             "autor": self.autor.nombre,
             "editorial": self.editorial.nombre,
