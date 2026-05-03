@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 from typing import Any
 
 from sqlalchemy import func
@@ -83,6 +84,28 @@ def _parse_bool(value: Any, field_name: str = "disponibilidad") -> bool:
     raise ApiError(
         "VALIDATION_ERROR",
         f"El campo '{field_name}' debe ser booleano.",
+        422,
+    )
+
+
+def _clean_fecha_publicacion(value: Any) -> date | None:
+    if value is None:
+        return None
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        value = value.strip()
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            raise ApiError(
+                "VALIDATION_ERROR",
+                "El campo 'fecha_publicacion' debe tener formato YYYY-MM-DD.",
+                422,
+            )
+    raise ApiError(
+        "VALIDATION_ERROR",
+        "El campo 'fecha_publicacion' debe ser una fecha valida.",
         422,
     )
 
@@ -410,6 +433,7 @@ def create_libro(payload: dict[str, Any]) -> dict[str, Any]:
     disponibilidad = payload.get("disponibilidad", True)
     disponible = _parse_bool(disponibilidad)
     descripcion = payload.get("descripcion")
+    fecha_publicacion = _clean_fecha_publicacion(payload.get("fecha_publicacion"))
 
     existing = Libro.query.filter_by(isbn=isbn).first()
     if existing is not None:
@@ -425,6 +449,7 @@ def create_libro(payload: dict[str, Any]) -> dict[str, Any]:
         categoria_id=categoria_id,
         disponibilidad=disponible,
         descripcion=descripcion,
+        fecha_publicacion=fecha_publicacion,
     )
     db.session.add(libro)
     db.session.commit()
@@ -450,6 +475,9 @@ def update_libro(libro_id: int, payload: dict[str, Any]) -> dict[str, Any]:
     categoria_id = _clean_id(payload.get("categoria_id"), "categoria_id")
     disponible = _parse_bool(payload.get("disponibilidad", libro.disponibilidad))
     descripcion = payload.get("descripcion", libro.descripcion)
+    fecha_publicacion = _clean_fecha_publicacion(
+        payload.get("fecha_publicacion", libro.fecha_publicacion)
+    )
 
     existing = Libro.query.filter(Libro.isbn == isbn, Libro.id != libro_id).first()
     if existing is not None:
@@ -464,6 +492,7 @@ def update_libro(libro_id: int, payload: dict[str, Any]) -> dict[str, Any]:
     libro.categoria_id = categoria_id
     libro.disponibilidad = disponible
     libro.descripcion = descripcion
+    libro.fecha_publicacion = fecha_publicacion
 
     db.session.commit()
     return libro.to_dict()

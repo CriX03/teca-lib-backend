@@ -141,6 +141,7 @@ class Libro(db.Model):
     )
     disponibilidad = db.Column(db.Boolean, nullable=False, default=True, index=True)
     descripcion = db.Column(db.Text, nullable=True)
+    fecha_publicacion = db.Column(db.Date, nullable=True, index=True)
     fecha_creacion = db.Column(
         db.DateTime(timezone=True),
         nullable=False,
@@ -151,7 +152,7 @@ class Libro(db.Model):
     editorial = db.relationship("Editorial", back_populates="libros", lazy="joined")
     categoria = db.relationship("Categoria", back_populates="libros", lazy="joined")
 
-    def to_dict(self) -> dict[str, str | int | bool]:
+    def to_dict(self) -> dict[str, str | int | bool | None]:
         """Convierte el libro a un diccionario con datos serializables."""
         return {
             "id": self.id,
@@ -162,6 +163,7 @@ class Libro(db.Model):
             "categoria_id": self.categoria_id,
             "disponibilidad": self.disponibilidad,
             "descripcion": self.descripcion,
+            "fecha_publicacion": self.fecha_publicacion.isoformat() if self.fecha_publicacion else None,
             "fecha_creacion": self.fecha_creacion.isoformat(),
             "autor": self.autor.nombre,
             "editorial": self.editorial.nombre,
