@@ -409,6 +409,7 @@ def create_libro(payload: dict[str, Any]) -> dict[str, Any]:
     categoria_id = _clean_id(payload.get("categoria_id"), "categoria_id")
     disponibilidad = payload.get("disponibilidad", True)
     disponible = _parse_bool(disponibilidad)
+    descripcion = payload.get("descripcion")
 
     existing = Libro.query.filter_by(isbn=isbn).first()
     if existing is not None:
@@ -423,6 +424,7 @@ def create_libro(payload: dict[str, Any]) -> dict[str, Any]:
         editorial_id=editorial_id,
         categoria_id=categoria_id,
         disponibilidad=disponible,
+        descripcion=descripcion,
     )
     db.session.add(libro)
     db.session.commit()
@@ -447,6 +449,7 @@ def update_libro(libro_id: int, payload: dict[str, Any]) -> dict[str, Any]:
     editorial_id = _clean_id(payload.get("editorial_id"), "editorial_id")
     categoria_id = _clean_id(payload.get("categoria_id"), "categoria_id")
     disponible = _parse_bool(payload.get("disponibilidad", libro.disponibilidad))
+    descripcion = payload.get("descripcion", libro.descripcion)
 
     existing = Libro.query.filter(Libro.isbn == isbn, Libro.id != libro_id).first()
     if existing is not None:
@@ -460,6 +463,7 @@ def update_libro(libro_id: int, payload: dict[str, Any]) -> dict[str, Any]:
     libro.editorial_id = editorial_id
     libro.categoria_id = categoria_id
     libro.disponibilidad = disponible
+    libro.descripcion = descripcion
 
     db.session.commit()
     return libro.to_dict()
