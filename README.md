@@ -1,5 +1,12 @@
 # Teca Lib - Backend de Biblioteca en Microservicios
 
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3.0-000000?logo=flask&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Arquitectura](https://img.shields.io/badge/Arquitectura-Microservicios-0A7B83)
+![Estado](https://img.shields.io/badge/Estado-En%20desarrollo-F2A900)
+
 Backend de biblioteca personal construido con arquitectura de microservicios en Python y Flask.
 
 ## Tabla de contenidos
